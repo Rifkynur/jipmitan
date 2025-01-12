@@ -5,7 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index",
-    "build": "npx prisma db push && npx prisma generate"
+    "prebuild": "npx prisma generate"
   },
   "keywords": [],
   "author": "",
