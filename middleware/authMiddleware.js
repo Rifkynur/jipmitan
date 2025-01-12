@@ -19,7 +19,7 @@ exports.authMiddleware = async (req, res, next) => {
     return next(
       res.status(401).json({
         error: error.name,
-        message: "Token yang dimasukan tidak ada",
+        message: "Token yang dimasukan tidak ada ",
       })
     );
   }
