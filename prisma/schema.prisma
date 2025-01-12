@@ -13,5 +13,37 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique
+  password  String
+  role      Role     @relation(fields: [roleId], references: [id])
+  roleId    String   @db.Uuid
+}
 
+model Role {
+  id    String   @id @default(uuid()) @db.Uuid
+  name  String   @unique
+  users User[]
+}
 
+model Expense {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  date      DateTime
+  amount    Int
+  desc      String   @db.Text
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+}
+
+model Income {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  date      DateTime
+  amount    Int
+  desc      String?  @db.Text
+  rt        String
+  updatedAt DateTime? @updatedAt
+  deletedAt DateTime?
+}
