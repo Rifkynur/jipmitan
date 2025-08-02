@@ -58,7 +58,7 @@ exports.addIncome = async (req, res) => {
       },
     });
 
-    if (roleUser.name != rt && roleUser.name != "superAdmin" && roleUser.name != "leader") {
+    if (roleUser.name != rt && roleUser.name != "admin") {
       return res.status(403).json({
         status: "failed",
         msg: "masukan rt dengan benar",
@@ -112,7 +112,7 @@ exports.updateIncome = async (req, res) => {
       });
     }
 
-    if (roleUser.name != rt && roleUser.name != "superAdmin" && roleUser.name != "leader") {
+    if (roleUser.name != rt && roleUser.name != "admin") {
       return res.status(403).json({
         status: "failed",
         msg: "masukan rt dengan benar",
@@ -168,7 +168,7 @@ exports.deleteIncome = async (req, res) => {
       },
     });
 
-    if (roleUser.name != findIncome.rt && roleUser.name != "superAdmin" && roleUser.name != "leader") {
+    if (roleUser.name != findIncome.rt && roleUser.name != "admin") {
       return res.status(401).json({
         status: "failed",
         msh: "anda tidak punya akses kesini",

@@ -6,14 +6,16 @@ const jwt = require("jsonwebtoken");
 
 const signToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN,
+    expiresIn: process.env.JWT_EXPIRES_IN | 6,
   });
 };
 
 const createSendToken = async (user, statusCode, res) => {
   const token = signToken(user.id);
   const cookieOption = {
-    expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000),
+    expires: new Date(
+      Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
+    ),
     httpOnly: true,
     sameSite: "none",
     secure: process.env.NODE_ENV === "production",
@@ -21,10 +23,10 @@ const createSendToken = async (user, statusCode, res) => {
 
   const userData = await prisma.user.findUnique({
     where: {
-      email: user.email,
+      username: user.username,
     },
     select: {
-      email: true,
+      username: true,
       role: {
         select: {
           name: true,
@@ -40,24 +42,24 @@ const createSendToken = async (user, statusCode, res) => {
 };
 
 exports.loginController = async (req, res) => {
-  const { email, password } = req.body;
+  const { username, password } = req.body;
 
-  if (!email || !password) {
+  if (!username || !password) {
     return res.status(404).json({
       status: "failed",
-      msg: "masukan email / password",
+      msg: "masukan username / password",
     });
   }
 
   try {
     const user = await prisma.user.findUnique({
-      where: { email },
+      where: { username },
     });
 
     if (!user) {
       return res.status(404).json({
         status: "failed",
-        msg: "email tidak ditemukan",
+        msg: "username tidak ditemukan",
       });
     }
 

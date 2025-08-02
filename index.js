@@ -9,7 +9,7 @@ const cors = require("cors");
 
 const app = express();
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS.split(",");
+const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(",");
 
 const corsOptions = {
   origin: (origin, callback) => {
