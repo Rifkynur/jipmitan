@@ -1,25 +1,83 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
+// MENGAMBIL DETAIL PEMASUKAN SELAMA 1 TAHUN
 exports.getIncome = async (req, res) => {
+  const year = req.query.year || "2025";
+  const rt = req.query.rt || "11";
   try {
-    const data = await prisma.income.findMany({
+    const incomes = await prisma.income.findMany({
       where: {
         deletedAt: null,
+        date: {
+          gte: new Date(`${year}-01-01`),
+          lte: new Date(`${year}-12-31`),
+        },
+        ...(rt
+          ? {
+              Member: {
+                is: {
+                  rt: {
+                    name: rt,
+                  },
+                },
+              },
+            }
+          : {}),
+      },
+      include: {
+        Member: {
+          include: {
+            rt: true,
+          },
+        },
       },
     });
+    const groupedByRT = {};
+
+    incomes.forEach((income) => {
+      const rtName = income.Member.rt.name;
+      const memberName = income.Member.name;
+      const dateKey = income.date.toISOString().split("T")[0]; // Format YYYY-MM-DD
+
+      if (!groupedByRT[rtName]) {
+        groupedByRT[rtName] = {};
+      }
+
+      if (!groupedByRT[rtName][memberName]) {
+        groupedByRT[rtName][memberName] = {};
+      }
+
+      if (!groupedByRT[rtName][memberName][dateKey]) {
+        groupedByRT[rtName][memberName][dateKey] = 0;
+      }
+
+      groupedByRT[rtName][memberName][dateKey] += income.amount;
+    });
+
+    const result = Object.entries(groupedByRT).map(([rt, members]) => ({
+      rt,
+      members: Object.entries(members).map(([name, weeklyAmounts]) => ({
+        name,
+        weeklyAmounts,
+      })),
+    }));
 
     return res.status(200).json({
       status: "success",
-      data,
+      result,
     });
   } catch (error) {
-    res.status(404).json({
+    console.error("Error fetching income:", error);
+
+    res.status(500).json({
       status: "failed",
       msg: "something wrong",
     });
   }
 };
+
+// MENGAMBIL DETAIL INCOME (DONE)
 
 exports.getDetailIncome = async (req, res) => {
   const { id } = req.params;
@@ -28,6 +86,13 @@ exports.getDetailIncome = async (req, res) => {
     const data = await prisma.income.findUnique({
       where: {
         id,
+      },
+      include: {
+        Member: {
+          include: {
+            rt: true,
+          },
+        },
       },
     });
     if (!data) {
@@ -49,16 +114,26 @@ exports.getDetailIncome = async (req, res) => {
   }
 };
 
+// MENAMBAHKAN INCOME (DONE)
+
 exports.addIncome = async (req, res) => {
   try {
-    const { name, amount, date, desc, rt } = req.body;
+    const { amount, date, desc, rtId, memberId } = req.body;
+
     const roleUser = await prisma.role.findUnique({
       where: {
         id: req.user.roleId,
       },
     });
 
-    if (roleUser.name != rt && roleUser.name != "admin") {
+    const rt = await prisma.rt.findUnique({
+      where: {
+        id: rtId,
+      },
+    });
+    // console.log(rt);
+
+    if (roleUser.name != rt.name && roleUser.name != "admin") {
       return res.status(403).json({
         status: "failed",
         msg: "masukan rt dengan benar",
@@ -67,10 +142,11 @@ exports.addIncome = async (req, res) => {
 
     const newData = await prisma.income.create({
       data: {
-        name,
+        userId: req.user.id,
         amount,
-        rt,
+        // rtId,
         desc,
+        memberId,
         date: new Date(date),
       },
     });
@@ -168,7 +244,13 @@ exports.deleteIncome = async (req, res) => {
       },
     });
 
-    if (roleUser.name != findIncome.rt && roleUser.name != "admin") {
+    const rt = await prisma.rt.findFirst({
+      where: {
+        id: findIncome.rtId,
+      },
+    });
+
+    if (roleUser.name != rt.name && roleUser.name != "admin") {
       return res.status(401).json({
         status: "failed",
         msh: "anda tidak punya akses kesini",

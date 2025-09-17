@@ -4,6 +4,10 @@ const authRouter = require("./routes/authRouter");
 const expenseRouter = require("./routes/expenseRouter");
 const incomeRouter = require("./routes/incomeRouter");
 const allDataRouter = require("./routes/allDataRouter");
+const membersRouter = require("./routes/memberRouter");
+const usersRouter = require("./routes/usersRouter");
+const roleRouter = require("./routes/roleRouter");
+const rtRouter = require("./routes/rtRouter");
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 
@@ -31,6 +35,10 @@ app.use(express.json());
 app.use("/api", expenseRouter);
 app.use("/api", allDataRouter);
 app.use("/api", incomeRouter);
+app.use("/api", membersRouter);
+app.use("/api", usersRouter);
+app.use("/api", roleRouter);
+app.use("/api", rtRouter);
 app.use("/api/auth", authRouter);
 
 app.listen(process.env.PORT, () => {

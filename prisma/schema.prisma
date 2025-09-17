@@ -13,6 +13,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Status_member {
+  id      String   @id @default(uuid()) @db.Uuid
+  name    String   @unique
+  members Member[]
+}
+
 model User {
   id       String    @id @default(uuid()) @db.Uuid
   username String    @unique
@@ -39,11 +45,13 @@ model Rt {
 }
 
 model Member {
-  id     String   @id @default(uuid()) @db.Uuid
-  name   String   @unique
-  rt     Rt       @relation(fields: [rtId], references: [id])
-  rtId   String   @db.Uuid
-  Income Income[]
+  id              String         @id @default(uuid()) @db.Uuid
+  name            String         @unique
+  rt              Rt             @relation(fields: [rtId], references: [id])
+  rtId            String         @db.Uuid
+  Income          Income[]
+  Status_member   Status_member? @relation(fields: [status_memberId], references: [id])
+  status_memberId String?        @db.Uuid
 }
 
 model Expense {

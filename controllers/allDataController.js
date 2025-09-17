@@ -52,7 +52,15 @@ exports.getAllData = async (req, res) => {
   }
 };
 
-// mengambil total data perbulan pertahun disetiap
+// mengambil total income perbulan pertahun disetiap rt
+/*
+  {
+    "rtIName": "09",
+    "month": "August",
+     "total": 150000
+  },
+
+*/
 exports.getTotalIncomeMonthlyPerRtPerYear = async (req, res) => {
   const year = parseInt(req.query.year) || 2025;
   try {
@@ -113,38 +121,48 @@ exports.getTotalIncomeMonthlyPerRtPerYear = async (req, res) => {
   }
 };
 
-exports.getIncomePerMonthPerRt = async (req, res) => {
-  const year = req.query.year || 2022;
+/* MENGAMBIL TOTAL INCOME PERBULAN DISETTIAP TAHUN PER RT
+  {
+    "rt": "09",
+    "total": 150000
+  },
+
+*/
+
+exports.getTotalIncomePerMonthPerRtPerYear = async (req, res) => {
+  const year = req.query.year || 2025;
 
   try {
-    const incomeData = await prisma.income.groupBy({
-      by: ["rt", "date"], // Mengelompokkan berdasarkan RT dan Tanggal
-      _sum: {
-        amount: true, // Menghitung total pemasukan
-      },
+    const incomes = await prisma.income.findMany({
       where: {
         deletedAt: null,
         date: {
-          gte: startOfYear(new Date(year)), // Awal tahun
-          lte: endOfYear(new Date(year)), // Akhir tahun
+          gte: new Date(`${year}-01-01`),
+          lte: new Date(`${year}-12-31`),
+        },
+      },
+      include: {
+        Member: {
+          include: {
+            rt: {
+              select: {
+                name: true,
+              },
+            },
+          },
         },
       },
     });
-    const formattedData = incomeData.reduce((acc, item) => {
-      const month = new Date(item.date).getMonth() + 1; // Ekstrak bulan (1-12)
-      const existingData = acc.find(
-        (entry) => entry.rt === item.rt && entry.month === month
-      );
+    const totalByRt = incomes.reduce((acc, income) => {
+      const rtName = income.Member?.rt?.name || "Unknown";
 
-      if (existingData) {
-        // Jika data untuk RT dan bulan yang sama sudah ada, tambahkan jumlah amount-nya
-        existingData.totalAmount += item._sum.amount;
+      const existing = acc.find((item) => item.rt === rtName);
+      if (existing) {
+        existing.total += income.amount;
       } else {
-        // Jika belum ada, tambahkan data baru
         acc.push({
-          rt: item.rt,
-          month: month,
-          totalAmount: item._sum.amount,
+          rt: rtName,
+          total: income.amount,
         });
       }
 
@@ -152,7 +170,7 @@ exports.getIncomePerMonthPerRt = async (req, res) => {
     }, []);
 
     res.status(200).json({
-      data: formattedData,
+      data: totalByRt,
     });
   } catch (error) {
     console.log(error);
@@ -163,10 +181,12 @@ exports.getIncomePerMonthPerRt = async (req, res) => {
   }
 };
 
+// BELUM KELAR
+
 exports.getDetailIncomePerQuarter = async (req, res) => {
   const year = req.query.year || "2022";
-  const quarter = req.query.quarter || "1";
-  const rt = req.query.rt || "rt09";
+  const quarter = req.query.quarter || "4";
+  const rt = req.query.rt || "09";
 
   const quarterStartMonth = (quarter - 1) * 3; // Januari (0-indexed), April, dst.
 
@@ -175,20 +195,31 @@ exports.getDetailIncomePerQuarter = async (req, res) => {
   const endDate = new Date(Date.UTC(year, quarterStartMonth + 3, 0)); // Tanggal 0 => akhir bulan sebelumnya
 
   try {
-    const income = await prisma.income.findMany({
+    const incomes = await prisma.income.findMany({
       where: {
         deletedAt: null,
-        rt,
         date: {
           gte: startDate,
           lte: endDate,
         },
+        Member: {
+          rt: {
+            name: rt, // ini memfilter berdasarkan nama RT
+          },
+        },
+      },
+      include: {
+        Member: {
+          include: {
+            rt: true, // ini hanya untuk ambil data rt juga dalam hasil
+          },
+        },
       },
     });
 
-    income.sort((a, b) => new Date(a.date) - new Date(b.date));
+    incomes.sort((a, b) => new Date(a.date) - new Date(b.date));
     res.status(200).json({
-      income,
+      incomes,
     });
   } catch (error) {
     console.log(error);

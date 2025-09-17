@@ -16,6 +16,8 @@ exports.authMiddleware = async (req, res, next) => {
   try {
     decode = await jwt.verify(token, process.env.JWT_SECRET);
   } catch (error) {
+    console.log(error);
+
     return next(
       res.status(401).json({
         error: error.name,
@@ -33,7 +35,7 @@ exports.authMiddleware = async (req, res, next) => {
   if (!currentUser) {
     return res.status(401).json({
       status: "failed",
-      msg: "silahkan login dengan email yang sudah terdaftar",
+      msg: "silahkan login dengan username yang sudah terdaftar",
     });
   }
   req.user = currentUser;
@@ -42,7 +44,9 @@ exports.authMiddleware = async (req, res, next) => {
 
 exports.permissionUser = (...roles) => {
   return async (req, res, next) => {
-    const rolesId = await prisma.role.findUnique({ where: { id: req.user.roleId } });
+    const rolesId = await prisma.role.findUnique({
+      where: { id: req.user.roleId },
+    });
     const roleData = rolesId.name;
 
     if (!roles.includes(roleData)) {
