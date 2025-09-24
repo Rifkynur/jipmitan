@@ -63,6 +63,7 @@ exports.getAllData = async (req, res) => {
 */
 exports.getTotalIncomeMonthlyPerRtPerYear = async (req, res) => {
   const year = parseInt(req.query.year) || 2025;
+  const rt = req.query.rt || "09";
   try {
     const incomes = await prisma.income.findMany({
       where: {
@@ -70,6 +71,11 @@ exports.getTotalIncomeMonthlyPerRtPerYear = async (req, res) => {
         date: {
           gte: new Date(`${year}-01-01`),
           lte: new Date(`${year}-12-31`),
+        },
+        Member: {
+          rt: {
+            name: rt,
+          },
         },
       },
       include: {
@@ -91,26 +97,29 @@ exports.getTotalIncomeMonthlyPerRtPerYear = async (req, res) => {
       const rtName = income.Member?.rt?.name;
       if (!rtName) return;
 
-      const month = new Date(income.date).toLocaleString("default", {
+      const month = new Date(income.date).toLocaleString("id-ID", {
         month: "long",
       });
+      const monthIndex = new Date(income.date).getMonth();
 
       const key = `${rtName}-${month}`;
 
       if (!grouped[key]) {
         grouped[key] = {
-          rtIName: rtName,
+          rtName,
           month,
           total: 0,
+          monthIndex,
         };
       }
 
       grouped[key].total += income.amount;
     });
-
-    const result = Object.values(grouped);
+    const sorted = Object.values(grouped).sort(
+      (a, b) => a.monthIndex - b.monthIndex
+    );
     res.status(200).json({
-      data: result,
+      data: sorted,
     });
   } catch (error) {
     console.log(error);
@@ -121,11 +130,15 @@ exports.getTotalIncomeMonthlyPerRtPerYear = async (req, res) => {
   }
 };
 
-/* MENGAMBIL TOTAL INCOME PERBULAN DISETTIAP TAHUN PER RT
+/* MENGAMBIL TOTAL INCOME PERBULAN DISETIAP TAHUN PER RT
   {
     "rt": "09",
     "total": 150000
   },
+  {
+    "rt" : "11",
+    "total" : 20000
+  }
 
 */
 

@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 // MENGAMBIL DETAIL PEMASUKAN SELAMA 1 TAHUN
 exports.getIncome = async (req, res) => {
   const year = req.query.year || "2025";
-  const rt = req.query.rt || "11";
+  const rt = req.query.rt;
   try {
     const incomes = await prisma.income.findMany({
       where: {
@@ -25,10 +25,15 @@ exports.getIncome = async (req, res) => {
             }
           : {}),
       },
-      include: {
+      select: {
+        id: true, // ⬅️ income.id ikut diminta
+        amount: true,
+        date: true,
         Member: {
-          include: {
-            rt: true,
+          select: {
+            id: true,
+            name: true,
+            rt: { select: { name: true } },
           },
         },
       },
@@ -38,7 +43,7 @@ exports.getIncome = async (req, res) => {
     incomes.forEach((income) => {
       const rtName = income.Member.rt.name;
       const memberName = income.Member.name;
-      const dateKey = income.date.toISOString().split("T")[0]; // Format YYYY-MM-DD
+      const dateKey = income.date.toISOString().split("T")[0]; // YYYY-MM-DD
 
       if (!groupedByRT[rtName]) {
         groupedByRT[rtName] = {};
@@ -49,10 +54,13 @@ exports.getIncome = async (req, res) => {
       }
 
       if (!groupedByRT[rtName][memberName][dateKey]) {
-        groupedByRT[rtName][memberName][dateKey] = 0;
+        groupedByRT[rtName][memberName][dateKey] = [];
       }
 
-      groupedByRT[rtName][memberName][dateKey] += income.amount;
+      groupedByRT[rtName][memberName][dateKey].push({
+        id: income.id,
+        amount: income.amount,
+      });
     });
 
     const result = Object.entries(groupedByRT).map(([rt, members]) => ({
@@ -167,7 +175,7 @@ exports.addIncome = async (req, res) => {
 
 exports.updateIncome = async (req, res) => {
   try {
-    const { name, amount, date, desc, rt } = req.body;
+    const { amount, date } = req.body;
     const { id } = req.params;
     const roleUser = await prisma.role.findUnique({
       where: {
@@ -179,7 +187,16 @@ exports.updateIncome = async (req, res) => {
       where: {
         id,
       },
+      include: {
+        Member: {
+          include: {
+            rt: true,
+          },
+        },
+      },
     });
+
+    console.log(findIncome);
 
     if (!findIncome) {
       return res.status(404).json({
@@ -188,7 +205,10 @@ exports.updateIncome = async (req, res) => {
       });
     }
 
-    if (roleUser.name != rt && roleUser.name != "admin") {
+    if (
+      roleUser.name != findIncome?.Member?.rt?.name &&
+      roleUser.name != "admin"
+    ) {
       return res.status(403).json({
         status: "failed",
         msg: "masukan rt dengan benar",
@@ -200,11 +220,8 @@ exports.updateIncome = async (req, res) => {
         id,
       },
       data: {
-        name,
         amount,
-        desc,
         date: new Date(date),
-        rt,
         updatedAt: new Date(Date.now()),
       },
     });
