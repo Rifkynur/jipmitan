@@ -40,7 +40,7 @@ exports.getAllUsers = async (req, res) => {
 };
 
 exports.addUsers = async (req, res) => {
-  const { username, password, rtId, roleId } = req.body;
+  const { username, password, rtId } = req.body;
   const passwordHash = await bcrypt.hash(password, 10);
 
   const user = req.user;
@@ -51,9 +51,20 @@ exports.addUsers = async (req, res) => {
     },
   });
 
-  console.log(roleUserLogin);
+  const inputRt = await prisma.rt.findFirst({
+    where: {
+      id: rtId,
+    },
+  });
 
-  if (!username || !password || !rtId || !roleId) {
+  const inputRole = await prisma.role.findFirst({
+    where: {
+      name: inputRt.name,
+    },
+  });
+  console.log({ password, rtId, username });
+
+  if (!username || !password || !rtId) {
     return res.status(400).json({
       status: "failed",
       msg: "please insert data",
@@ -71,7 +82,7 @@ exports.addUsers = async (req, res) => {
       data: {
         username,
         password: passwordHash,
-        roleId,
+        roleId: inputRole?.id,
         rtId,
       },
     });
