@@ -3,12 +3,25 @@ const prisma = new PrismaClient();
 const bcrypt = require("bcrypt");
 
 exports.getAllUsers = async (req, res) => {
+  const { search, rtId } = req.query;
+  console.log({ search });
+
   const adminId = await prisma.role.findUnique({
     where: { name: "admin" },
   });
   try {
     const allUsers = await prisma.user.findMany({
       where: {
+        ...(search && {
+          username: {
+            contains: search,
+            mode: "insensitive",
+          },
+        }),
+        ...(rtId &&
+          rtId !== "all" && {
+            rtId: rtId,
+          }),
         roleId: {
           not: adminId.id,
         },
