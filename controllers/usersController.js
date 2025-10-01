@@ -4,8 +4,6 @@ const bcrypt = require("bcrypt");
 
 exports.getAllUsers = async (req, res) => {
   const { search, rtId } = req.query;
-  console.log({ search });
-
   const adminId = await prisma.role.findUnique({
     where: { name: "admin" },
   });
