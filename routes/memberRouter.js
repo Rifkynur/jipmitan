@@ -16,6 +16,6 @@ router.get("/members", getAllMembers);
 router.get("/members/:id", getDetialsMembers);
 router.post("/members", authMiddleware, addMembers);
 router.patch("/members/:id", authMiddleware, editMembers);
-router.delete("/member/:id", authMiddleware, editMembers);
+router.delete("/members/:id", authMiddleware, deleteMember);
 
 module.exports = router;
