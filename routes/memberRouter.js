@@ -6,13 +6,12 @@ const {
   getDetialsMembers,
   editMembers,
   deleteMember,
+  getStatusMember,
 } = require("../controllers/memberController");
-const {
-  authMiddleware,
-  permissionUser,
-} = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware");
 
 router.get("/members", getAllMembers);
+router.get("/members/status", getStatusMember);
 router.get("/members/:id", getDetialsMembers);
 router.post("/members", authMiddleware, addMembers);
 router.patch("/members/:id", authMiddleware, editMembers);

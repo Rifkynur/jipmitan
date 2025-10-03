@@ -2,61 +2,31 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 exports.getAllMembers = async (req, res) => {
-  console.log(req.user);
+  let { page = 1, limit = 10, search, rtId, status } = req.query;
 
+  page = parseInt(page);
+  limit = parseInt(limit);
   try {
-    let { page = 1, limit = 10, search = "", rt, status } = req.query;
-    page = parseInt(page);
-    limit = parseInt(limit);
-
-    const where = {};
-
-    // Filter nama member
-    if (search) {
-      where.name = { contains: search, mode: "insensitive" };
-    }
-
-    // Filter berdasarkan RT (cek dulu apakah ada di DB)
-    if (rt) {
-      const rtExists = await prisma.rt.findUnique({
-        where: { id: rt },
-      });
-
-      if (!rtExists) {
-        return res.status(200).json({
-          data: [],
-          status: "success",
-          page,
-          totalData: 0,
-          totalPage: 0,
-        });
-      }
-
-      where.rt = {
-        is: { id: rt },
-      };
-    }
-
-    // Filter berdasarkan Status_member (cek dulu apakah ada di DB)
-    if (status) {
-      const statusExists = await prisma.status_member.findUnique({
-        where: { id: status },
-      });
-
-      if (!statusExists) {
-        return res.status(200).json({
-          data: [],
-          status: "success",
-          page,
-          totalData: 0,
-          totalPage: 0,
-        });
-      }
-
-      where.Status_member = {
-        is: { id: status },
-      };
-    }
+    const where = {
+      ...(search && {
+        name: {
+          contains: search,
+          mode: "insensitive",
+        },
+      }),
+      ...(rtId &&
+        rtId !== "all" && {
+          rt: {
+            is: { id: rtId },
+          },
+        }),
+      ...(status &&
+        status !== "all" && {
+          Status_member: {
+            is: { id: status },
+          },
+        }),
+    };
 
     // Hitung total data sesuai filter
     const totalData = await prisma.member.count({ where });
@@ -90,6 +60,23 @@ exports.getAllMembers = async (req, res) => {
   }
 };
 
+exports.getStatusMember = async (req, res) => {
+  try {
+    const data = await prisma.status_member.findMany();
+    return res.status(200).json({
+      status: "success",
+      data,
+    });
+  } catch (error) {
+    console.log(error.message);
+
+    return res.status(500).json({
+      status: "failed",
+      msg: "internal server error",
+    });
+  }
+};
+
 exports.getDetialsMembers = async (req, res) => {
   const { id } = req.params;
 
@@ -116,7 +103,6 @@ exports.getDetialsMembers = async (req, res) => {
 exports.addMembers = async (req, res) => {
   const user = req.user;
   const { name, rtId } = req.body;
-  //   console.log({ roleUser });
 
   const rtUser = await prisma.rt.findFirst({
     where: { id: user.rtId },

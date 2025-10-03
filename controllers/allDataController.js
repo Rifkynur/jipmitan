@@ -148,7 +148,6 @@ exports.getTotalIncomePerMonthPerRtPerYear = async (req, res) => {
   try {
     const incomes = await prisma.income.findMany({
       where: {
-        deletedAt: null,
         date: {
           gte: new Date(`${year}-01-01`),
           lte: new Date(`${year}-12-31`),
@@ -210,7 +209,6 @@ exports.getDetailIncomePerQuarter = async (req, res) => {
   try {
     const incomes = await prisma.income.findMany({
       where: {
-        deletedAt: null,
         date: {
           gte: startDate,
           lte: endDate,

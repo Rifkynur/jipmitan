@@ -2,15 +2,31 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 exports.getExpense = async (req, res) => {
+  const { year = 2025, page = 1, limit = 10 } = req.query;
+
   try {
+    const where = {
+      ...(year &&
+        year !== "all" && {
+          date: {
+            gte: new Date(`${year}-01-01`),
+            lte: new Date(`${year}-12-31`),
+          },
+        }),
+    };
+    const totalData = await prisma.expense.count({ where });
+    const totalPage = Math.ceil(totalData / limit);
     const data = await prisma.expense.findMany({
-      where: {
-        deletedAt: null,
-      },
+      where,
+      take: limit,
+      skip: (page - 1) * limit,
     });
     res.status(200).json({
       status: "success",
       data,
+      page,
+      totalPage,
+      totalData,
     });
   } catch (error) {
     res.status(404).json({
@@ -49,14 +65,16 @@ exports.getDetailExpense = async (req, res) => {
   }
 };
 exports.addExpense = async (req, res) => {
-  const { name, amount, date, desc } = req.body;
+  const { amount, date, desc } = req.body;
+  const user = req.user;
+
   try {
     const newData = await prisma.expense.create({
       data: {
-        name,
         amount,
         date: new Date(date),
         desc,
+        userId: user.id,
       },
     });
 
@@ -74,7 +92,7 @@ exports.addExpense = async (req, res) => {
 
 exports.updateExpense = async (req, res) => {
   const { id } = req.params;
-  const { name, date, desc, amount } = req.body;
+  const { date, desc, amount } = req.body;
   try {
     const findExpeseById = await prisma.expense.findUnique({
       where: {
@@ -92,7 +110,6 @@ exports.updateExpense = async (req, res) => {
         id,
       },
       data: {
-        name,
         date: new Date(date),
         desc,
         amount,
@@ -131,18 +148,15 @@ exports.deleteExpense = async (req, res) => {
       });
     }
 
-    const deletedExpense = await prisma.expense.update({
+    const deletedExpense = await prisma.expense.delete({
       where: {
         id,
-      },
-      data: {
-        deletedAt: new Date(Date.now()),
       },
     });
 
     return res.status(201).json({
       status: "success",
-      data: deletedExpense,
+      msg: "Berhasil Menghapus Data",
     });
   } catch (error) {
     res.status(500).json({

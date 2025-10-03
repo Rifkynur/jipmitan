@@ -8,7 +8,6 @@ exports.getIncome = async (req, res) => {
   try {
     const incomes = await prisma.income.findMany({
       where: {
-        deletedAt: null,
         date: {
           gte: new Date(`${year}-01-01`),
           lte: new Date(`${year}-12-31`),
@@ -274,18 +273,11 @@ exports.deleteIncome = async (req, res) => {
       });
     }
 
-    const deletedIncome = await prisma.income.update({
-      where: {
-        id,
-      },
-      data: {
-        deletedAt: new Date(Date.now()),
-      },
-    });
+    const deletedIncome = await prisma.income.delete({ where: { id } });
 
     return res.status(201).json({
       status: "success",
-      deletedIncome,
+      msg: "Berhasil Menghapus Data",
     });
   } catch (error) {
     console.log(error.message);
