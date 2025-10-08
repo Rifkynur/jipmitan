@@ -2,8 +2,9 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 exports.getExpense = async (req, res) => {
-  const { year = 2025, page = 1, limit = 10 } = req.query;
+  let { year = new Date().getFullYear(), page = 1, limit = 10 } = req.query;
 
+  page = parseInt(page);
   try {
     const where = {
       ...(year &&

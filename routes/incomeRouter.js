@@ -10,11 +10,13 @@ const {
   addIncome,
   deleteIncome,
   updateIncome,
+  getTotalIncome,
 } = require("../controllers/incomeController");
 
 router.get("/income", getIncome);
+router.get("/total-income", getTotalIncome);
 router.get("/income/:id", getDetailIncome);
 router.post("/income", authMiddleware, addIncome);
 router.patch("/income/:id", authMiddleware, updateIncome);
-router.put("/income/delete/:id", authMiddleware, deleteIncome);
+router.delete("/income/:id", authMiddleware, deleteIncome);
 module.exports = router;

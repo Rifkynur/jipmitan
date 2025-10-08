@@ -12,13 +12,15 @@ const signToken = (id) => {
 
 const createSendToken = async (user, statusCode, res) => {
   const token = signToken(user.id);
+  const sameSiteOption =
+    process.env.NODE_ENV == "production" ? "none" : "strict";
   const cookieOption = {
     expires: new Date(
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
     // sameSite: "none",
-    samesite: "Strict",
+    samesite: sameSiteOption,
     secure: process.env.NODE_ENV === "production",
   };
 

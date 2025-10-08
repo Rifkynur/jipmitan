@@ -11,17 +11,11 @@ const {
 exports.getAllData = async (req, res) => {
   try {
     const incomes = await prisma.income.findMany({
-      where: {
-        deletedAt: null,
-      },
       select: {
         amount: true,
       },
     });
     const expense = await prisma.expense.findMany({
-      where: {
-        deletedAt: null,
-      },
       select: {
         amount: true,
       },
@@ -63,18 +57,17 @@ exports.getAllData = async (req, res) => {
 */
 exports.getTotalIncomeMonthlyPerRtPerYear = async (req, res) => {
   const year = parseInt(req.query.year) || 2025;
-  const rt = req.query.rt || "09";
+  const rtId = req.query.rtId || "f7d8c89f-7342-4779-bf39-40a6a8adb483";
   try {
     const incomes = await prisma.income.findMany({
       where: {
-        deletedAt: null,
         date: {
           gte: new Date(`${year}-01-01`),
           lte: new Date(`${year}-12-31`),
         },
         Member: {
           rt: {
-            name: rt,
+            id: rtId,
           },
         },
       },
@@ -88,6 +81,9 @@ exports.getTotalIncomeMonthlyPerRtPerYear = async (req, res) => {
             },
           },
         },
+      },
+      orderBy: {
+        date: "asc",
       },
     });
 
@@ -148,10 +144,14 @@ exports.getTotalIncomePerMonthPerRtPerYear = async (req, res) => {
   try {
     const incomes = await prisma.income.findMany({
       where: {
-        date: {
-          gte: new Date(`${year}-01-01`),
-          lte: new Date(`${year}-12-31`),
-        },
+        ...(year && year !== "all"
+          ? {
+              date: {
+                gte: new Date(`${year}-01-01`),
+                lte: new Date(`${year}-12-31`),
+              },
+            }
+          : {}),
       },
       include: {
         Member: {
