@@ -97,48 +97,51 @@ exports.getIncome = async (req, res) => {
 };
 
 exports.getTotalIncome = async (req, res) => {
-  const rtId = req.query.rtId || "f7d8c89f-7342-4779-bf39-40a6a8adb483"; // bisa id RT (UUID)
-  const rtName = req.query.rtName; // atau nama RT (opsional)
+  const rtId = req.query.rtId;
+  const rtName = req.query.rtName;
   const year = parseInt(req.query.year) || new Date().getFullYear();
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
 
   try {
-    // 1) Cari RT
+    // 1️⃣ Cari RT
     let rt = null;
     if (rtId) {
       rt = await prisma.rt.findUnique({ where: { id: rtId } });
     } else if (rtName) {
       rt = await prisma.rt.findUnique({ where: { name: rtName } });
     } else {
-      return res
-        .status(400)
-        .json({ status: "failed", msg: "rtId atau rtName wajib dikirim" });
+      return res.status(400).json({
+        status: "failed",
+        msg: "rtId atau rtName wajib dikirim",
+      });
     }
 
     if (!rt) {
-      return res
-        .status(404)
-        .json({ status: "failed", msg: "RT tidak ditemukan" });
+      return res.status(404).json({
+        status: "failed",
+        msg: "RT tidak ditemukan",
+      });
     }
 
-    // 2) Ambil semua memberId dan userId untuk RT tersebut
+    // 2️⃣ Ambil memberId & userId milik RT ini
     const members = await prisma.member.findMany({
       where: { rtId: rt.id },
       select: { id: true },
     });
-    const memberIds = members.map((m) => m.id);
-
     const users = await prisma.user.findMany({
       where: { rtId: rt.id },
       select: { id: true },
     });
+
+    const memberIds = members.map((m) => m.id);
     const userIds = users.map((u) => u.id);
 
-    // 3) Ambil incomes yang berkaitan (member OR user) pada tahun yang diminta
+    // 3️⃣ Ambil income berdasarkan RT & tahun
     const dateFrom = new Date(`${year}-01-01T00:00:00.000Z`);
     const dateTo = new Date(`${year}-12-31T23:59:59.999Z`);
 
     let incomes = [];
-    // bila tidak ada member & user, skip query (tidak ada income untuk RT ini)
     if (memberIds.length > 0 || userIds.length > 0) {
       const orConditions = [];
       if (memberIds.length > 0)
@@ -158,27 +161,36 @@ exports.getTotalIncome = async (req, res) => {
       });
     }
 
-    // 4) Kelompokkan berdasarkan tanggal (YYYY-MM-DD) dan jumlahkan
+    // 4️⃣ Kelompokkan berdasarkan tanggal
     const dailyMap = {};
     for (const inc of incomes) {
-      const dateKey = inc.date.toISOString().split("T")[0]; // "2025-02-28"
+      const dateKey = inc.date.toISOString().split("T")[0]; // ex: "2025-02-28"
       if (!dailyMap[dateKey]) dailyMap[dateKey] = 0;
       dailyMap[dateKey] += inc.amount;
     }
 
-    const dailyTotals = Object.entries(dailyMap)
+    const allDailyTotals = Object.entries(dailyMap)
       .map(([date, totalIncome]) => ({ date, totalIncome }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+      .sort((a, b) => b.date.localeCompare(a.date)); // terbaru duluan
+    // 5️⃣ Pagination
+    const totalData = allDailyTotals.length;
+    const totalPage = Math.ceil(totalData / limit);
+    const start = (page - 1) * limit;
+    const paginated = allDailyTotals.slice(start, start + limit);
 
-    // 5) Response
+    // 6️⃣ Response
     return res.status(200).json({
       rt: rt.name,
       rtId: rt.id,
       year,
-      dailyTotals,
+      page,
+      limit,
+      totalPage,
+      totalData,
+      data: paginated,
     });
   } catch (error) {
-    console.error("getTotalIncome error:", error);
+    console.error(error);
     return res.status(500).json({
       status: "failed",
       msg: "internal server error",
@@ -227,20 +239,24 @@ exports.getDetailIncome = async (req, res) => {
 
 exports.addIncome = async (req, res) => {
   try {
-    const { amount, date, desc, rtId, memberId } = req.body;
+    let { amount, date, memberId } = req.body;
 
     const roleUser = await prisma.role.findUnique({
       where: {
         id: req.user.roleId,
       },
     });
+    const member = await prisma.member.findUnique({
+      where: {
+        id: memberId,
+      },
+    });
 
     const rt = await prisma.rt.findUnique({
       where: {
-        id: rtId,
+        id: member.rtId,
       },
     });
-    // console.log(rt);
 
     if (roleUser.name != rt.name && roleUser.name != "admin") {
       return res.status(403).json({
@@ -253,8 +269,7 @@ exports.addIncome = async (req, res) => {
       data: {
         userId: req.user.id,
         amount,
-        // rtId,
-        desc,
+        desc: "jimpitan mingguan",
         memberId,
         date: new Date(date),
       },

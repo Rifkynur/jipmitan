@@ -2,7 +2,7 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 exports.getAllMembers = async (req, res) => {
-  let { page = 1, limit = 10, search, rtId, status } = req.query;
+  let { page = 1, limit = 10, search, rtId, status, role } = req.query;
 
   page = parseInt(page);
   limit = parseInt(limit);
@@ -27,6 +27,30 @@ exports.getAllMembers = async (req, res) => {
           },
         }),
     };
+
+    if (role) {
+      const data = await prisma.member.findMany({
+        where: {
+          Status_member: {
+            is: { name: "active" },
+          },
+          ...(role &&
+            role !== "admin" && {
+              rt: {
+                name: role,
+              },
+            }),
+        },
+        include: {
+          rt: true,
+        },
+      });
+
+      return res.status(200).json({
+        msg: "success",
+        data,
+      });
+    }
 
     // Hitung total data sesuai filter
     const totalData = await prisma.member.count({ where });

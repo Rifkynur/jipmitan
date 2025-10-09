@@ -34,7 +34,7 @@ exports.authMiddleware = async (req, res, next) => {
 
   if (!currentUser) {
     return res.status(401).json({
-      status: "failed",
+      status: "unauthorized",
       msg: "silahkan login dengan username yang sudah terdaftar",
     });
   }
