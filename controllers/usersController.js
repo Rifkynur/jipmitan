@@ -166,6 +166,11 @@ exports.editUsers = async (req, res) => {
       msg: "Anda Tidak Punya Akses",
     });
   }
+  const oldPassword = await prisma.user.findUnique({
+    where: { id },
+  });
+
+  console.log(oldPassword.password);
 
   try {
     const existingUsers = await prisma.user.findUnique({
@@ -181,7 +186,14 @@ exports.editUsers = async (req, res) => {
 
     const updatedUsers = await prisma.user.update({
       where: { id },
-      data: req.body,
+      data: {
+        username,
+        rtId,
+        roleId,
+        password: password
+          ? await bcrypt.hash(password, 10)
+          : oldPassword.password,
+      },
       include: {
         rt: true,
         role: true,
