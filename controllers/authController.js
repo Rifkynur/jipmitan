@@ -86,6 +86,31 @@ exports.loginController = async (req, res) => {
   }
 };
 
+exports.checkAuth = async(req,res) =>{
+  const user = req.user
+  try{
+    const userData = await prisma.user.findUnique({
+    where: {
+      username: user.username,
+    },
+    select: {
+      username: true,
+      role: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+      res.status(200).json(userData)
+  }catch(error){
+    return res.status(500).json({
+      status: "failed",
+      msg: "internal server error",
+    });
+  }
+}
+
 exports.logoutController = async (req, res) => {
   try {
     res.cookie("jwt", "", {
