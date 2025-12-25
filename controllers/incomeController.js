@@ -61,8 +61,10 @@ exports.getIncome = async (req, res) => {
 
       member.Income.forEach((income) => {
         const dateKey = income.date.toISOString().split("T")[0];
-        if (!groupedByRT[rtName][memberName][dateKey])
+
+        if (!groupedByRT[rtName][memberName][dateKey]) {
           groupedByRT[rtName][memberName][dateKey] = [];
+        }
 
         groupedByRT[rtName][memberName][dateKey].push({
           id: income.id,
@@ -71,12 +73,24 @@ exports.getIncome = async (req, res) => {
       });
     });
 
+    /**
+     * 🔹 CONVERT OBJECT → ARRAY + SORT DESC
+     */
     const result = Object.entries(groupedByRT).map(([rt, members]) => ({
       rt,
-      members: Object.entries(members).map(([name, weeklyAmounts]) => ({
-        name,
-        weeklyAmounts,
-      })),
+      members: Object.entries(members).map(([name, weeklyMap]) => {
+        const weeklyAmounts = Object.entries(weeklyMap)
+          .map(([date, incomes]) => ({
+            date,
+            incomes,
+          }))
+          .sort((a, b) => new Date(b.date) - new Date(a.date)); // 🔥 TERBARU DI ATAS
+
+        return {
+          name,
+          weeklyAmounts,
+        };
+      }),
     }));
 
     // 🔹 Kirim response

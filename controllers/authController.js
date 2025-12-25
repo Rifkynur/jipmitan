@@ -19,8 +19,8 @@ const createSendToken = async (user, statusCode, res) => {
       Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000
     ),
     httpOnly: true,
-    sameSite: "none",
-    // samesite: sameSiteOption,
+    // sameSite: "none",
+    samesite: sameSiteOption,
     secure: process.env.NODE_ENV === "production",
   };
 
@@ -86,30 +86,30 @@ exports.loginController = async (req, res) => {
   }
 };
 
-exports.checkAuth = async(req,res) =>{
-  const user = req.user
-  try{
+exports.checkAuth = async (req, res) => {
+  const user = req.user;
+  try {
     const userData = await prisma.user.findUnique({
-    where: {
-      username: user.username,
-    },
-    select: {
-      username: true,
-      role: {
-        select: {
-          name: true,
+      where: {
+        username: user.username,
+      },
+      select: {
+        username: true,
+        role: {
+          select: {
+            name: true,
+          },
         },
       },
-    },
-  });
-      res.status(200).json(userData)
-  }catch(error){
+    });
+    res.status(200).json(userData);
+  } catch (error) {
     return res.status(500).json({
       status: "failed",
       msg: "internal server error",
     });
   }
-}
+};
 
 exports.logoutController = async (req, res) => {
   try {

@@ -1,0 +1,5 @@
+-- AlterTable
+ALTER TABLE "Expense" ALTER COLUMN "date" SET DATA TYPE DATE;
+
+-- AlterTable
+ALTER TABLE "Income" ALTER COLUMN "date" SET DATA TYPE DATE;
