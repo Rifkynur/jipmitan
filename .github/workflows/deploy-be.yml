@@ -1,0 +1,41 @@
+name: Deploy Backend to VPS
+
+on:
+  push:
+    branches:
+      - main # Skrip ini langsung jalan otomatis begitu kamu push ke branch main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          port: 22
+          script: |
+            # 1. Masuk ke folder repository Backend di VPS dan tarik kode terbaru
+            cd ~/website/jimpitan-backend || exit
+            git pull origin main
+
+            # 2. Suntikkan file .env produksi secara dinamis dari GitHub Secrets
+            echo "${{ secrets.ENV_BACKEND }}" > .env
+
+            # 3. Pindah ke folder induk tempat docker-compose.yml berada
+            cd ~/website
+
+            # 4. Rebuild dan jalankan ulang hanya service backend di latar belakang
+            docker compose up -d --build backend
+
+            # 5. Jalankan migrasi database Prisma secara otomatis di dalam kontainer backend
+            docker compose exec -T backend npx prisma migrate deploy
+
+            # 6. Bersihkan sisa-sisa Docker image lama agar penyimpanan VPS tidak penuh
+            docker image prune -f
