@@ -1,6 +1,6 @@
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 const main = async () => {
   const rt = await prisma.rt.findMany();

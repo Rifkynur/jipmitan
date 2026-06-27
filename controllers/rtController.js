@@ -2,11 +2,18 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 exports.getAllRt = async (req, res) => {
+  let { name } = req.query;
   try {
+    const whereCondition = {
+      name: { not: "all" },
+    };
+
+    if (name) {
+      whereCondition.name = name;
+    }
+
     const allRt = await prisma.rt.findMany({
-      where: {
-        name: { not: "all" },
-      },
+      where: whereCondition,
     });
 
     return res.status(200).json({
