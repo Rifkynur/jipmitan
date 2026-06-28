@@ -7,11 +7,11 @@ const main = async () => {
       name: "09",
     },
   });
-  const roles = await prisma.role.findFirst({
-    where: {
-      name,
-    },
-  });
+  // const roles = await prisma.role.findFirst({
+  //   where: {
+  //     name,
+  //   },
+  // });
   const statusMemberActive = await prisma.status_member.findFirst({
     where: {
       name: "active",
