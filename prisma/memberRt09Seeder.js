@@ -72,37 +72,37 @@ const main = async () => {
     {
       name: "ibu watiyem",
       rtId: rt09.id,
-      status_memberId: statusMemberActive.idstatusMemberActive.id,
+      status_memberId: statusMemberActive.id,
     },
     {
       name: "ibu win",
       rtId: rt09.id,
-      status_memberId: statusMemberActive.idstatusMemberActive.id,
+      status_memberId: statusMemberActive.id,
     },
     {
       name: "pak mulyono",
       rtId: rt09.id,
-      status_memberId: statusMemberActive.idstatusMemberActive.id,
+      status_memberId: statusMemberActive.id,
     },
     {
       name: "pak haryadi",
       rtId: rt09.id,
-      status_memberId: statusMemberActive.idstatusMemberActive.id,
+      status_memberId: statusMemberActive.id,
     },
     {
       name: "pak bowo",
       rtId: rt09.id,
-      status_memberId: statusMemberActive.idstatusMemberActive.id,
+      status_memberId: statusMemberActive.id,
     },
     {
       name: "pak jono",
       rtId: rt09.id,
-      status_memberId: statusMemberActive.idstatusMemberActive.id,
+      status_memberId: statusMemberActive.id,
     },
     {
       name: "pak hardi",
       rtId: rt09.id,
-      status_memberId: statusMemberActive.idstatusMemberActive.id,
+      status_memberId: statusMemberActive.id,
     },
     {
       name: "ibu wahini",
