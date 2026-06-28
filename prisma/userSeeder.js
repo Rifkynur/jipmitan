@@ -3,8 +3,26 @@ const prisma = new PrismaClient();
 const bcrypt = require("bcryptjs");
 
 const main = async () => {
-  const rt = await prisma.rt.findMany();
-  const roles = await prisma.role.findMany();
+  const adminRt = await prisma.rt.findFirst({
+    where: {
+      name: "all",
+    },
+  });
+  const rt09 = await prisma.rt.findFirst({
+    where: {
+      name: "09",
+    },
+  });
+  const adminRole = await prisma.role.findFirst({
+    where: {
+      name: "admin",
+    },
+  });
+  const rt09Role = await prisma.role.findFirst({
+    where: {
+      name: "09",
+    },
+  });
 
   console.log(rt);
   console.log(roles);
@@ -15,14 +33,14 @@ const main = async () => {
     {
       username: "admin",
       password: hashPassword,
-      roleId: roles[0].id,
-      rtId: rt[3].id,
+      roleId: adminRole.id,
+      rtId: adminRt.id,
     },
     {
       username: "member09",
       password: hashPassword,
-      roleId: roles[1].id,
-      rtId: rt[0].id,
+      roleId: rt09Role.id,
+      rtId: rt09.id,
     },
   ];
 
