@@ -20,8 +20,10 @@ const createSendToken = async (user, statusCode, res) => {
     ),
     httpOnly: true,
     // sameSite: "none",
-    samesite: sameSiteOption,
-    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    // samesite: sameSiteOption,
+    // secure: process.env.NODE_ENV === "production",
+    secure: false,
   };
 
   const userData = await prisma.user.findUnique({
