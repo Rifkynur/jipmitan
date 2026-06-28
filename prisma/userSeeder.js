@@ -24,9 +24,6 @@ const main = async () => {
     },
   });
 
-  console.log(rt);
-  console.log(roles);
-
   const hashPassword = await bcrypt.hash("pass123", 10);
 
   const usersData = [
